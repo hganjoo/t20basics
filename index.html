@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>T20 Impact — Himanish Ganjoo</title>
+<title>T20 Metrics — Himanish Ganjoo</title>
 
 <!-- MathJax config: match LaTeX inline $...$ and display, plus equation numbering + \ref -->
 <script>
@@ -146,22 +146,95 @@ mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%;}
 
 .footer-note{margin-top:3em;padding-top:1.2em;border-top:1px solid var(--rule);
   font-size:.85em;color:var(--muted);}
+
+/* Table of contents */
+nav.toc{
+  margin:2em 0 2.6em;
+  padding:1.2em 1.4em 1.3em;
+  border:1px solid var(--rule);
+  border-left:4px solid var(--headblue);
+  border-radius:3px;
+  background:#fafbfc;
+  font-size:.95em;
+}
+nav.toc h2{
+  font-variant:small-caps;
+  font-size:1.05rem;
+  letter-spacing:.05em;
+  font-weight:700;
+  margin:0 0 .6em;
+}
+nav.toc ol{list-style:none;margin:0;padding:0;counter-reset:toc;}
+nav.toc > ol > li{counter-increment:toc;margin:.28em 0;}
+nav.toc > ol > li::before{
+  content:counter(toc) ".\00a0";
+  font-weight:700;color:var(--headblue);
+}
+nav.toc ol ol{margin:.15em 0 .35em 1.4em;counter-reset:toc2;}
+nav.toc ol ol li{counter-increment:toc2;margin:.15em 0;font-size:.92em;}
+nav.toc ol ol li::before{
+  content:counter(toc) "." counter(toc2) "\00a0";
+  font-weight:600;color:var(--muted);
+}
+nav.toc a{border-bottom:none;color:var(--ink);}
+nav.toc a:hover{color:var(--headblue);text-decoration:underline;}
+
+/* offset anchor jumps a little so headings aren't flush to top */
+h2.sec,h3.sub{scroll-margin-top:14px;}
 </style>
 </head>
 <body>
 <div class="t20-wrap">
 
   <div class="t20-titleblock">
-    <h1 class="t20-title">T20 Impact</h1>
+    <h1 class="t20-title">T20 Metrics: A Primer</h1>
     <p class="t20-author">Himanish Ganjoo</p>
     <p class="t20-date">August 2026</p>
   </div>
 
   <div class="t20-abstract">
     <h2>Abstract</h2>
-    <p>A consolidated framework of contextual metrics for evaluating Twenty20 cricket
-    performance, unifying run- and wicket-value measures into a common language.</p>
+    <p>A pedagogical introduction to T20 theory and advanced contextual metrics for
+    evaluating T20 performance.</p>
   </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <nav class="toc" aria-label="Table of contents">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#sec-intro">Introduction</a></li>
+      <li><a href="#sec-totals">Computing Expected Totals</a>
+        <ol>
+          <li><a href="#sub-nested">Nested Shrinkage</a></li>
+        </ol>
+      </li>
+      <li><a href="#sec-raawaa">RAA and WAA</a>
+        <ol>
+          <li><a href="#sub-baseline">Computing The Baseline</a></li>
+          <li><a href="#sub-examples">Examples and Philosophy</a></li>
+        </ol>
+      </li>
+      <li><a href="#sec-dl">The Duckworth-Lewis Method</a>
+        <ol>
+          <li><a href="#sub-dlstd">DL Standard</a></li>
+          <li><a href="#sub-dlpro">DL Pro Edition</a></li>
+          <li><a href="#sub-lambda">Calculating &lambda;</a></li>
+          <li><a href="#sub-repurpose">Repurposing &lambda;</a></li>
+        </ol>
+      </li>
+      <li><a href="#sec-impact">Impact</a>
+        <ol>
+          <li><a href="#sub-motivation">Motivation</a></li>
+          <li><a href="#sub-calc">Calculation and Cricketing Logic</a></li>
+          <li><a href="#sub-adjust">Aside: Adjusting Impact for Player Quality</a></li>
+          <li><a href="#sub-winrates">Relations with Win Rates and Ball Outcomes</a></li>
+          <li><a href="#sub-balllevel">Relation with Ball-Level Outcomes</a></li>
+          <li><a href="#sub-avesr">Relation with Average and SR</a></li>
+        </ol>
+      </li>
+      <li><a href="#sec-wpa">Win Probability Added</a></li>
+    </ol>
+  </nav>
 
   <!-- ===================== INTRODUCTION ===================== -->
   <h2 class="sec" id="sec-intro">1&ensp;Introduction</h2>
@@ -180,6 +253,12 @@ mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%;}
     <li><strong>WPA:</strong> win probability added;</li>
     <li><strong>Leverage:</strong> the capacity of each delivery to change the win probability.</li>
   </ol>
+
+  <p>In the process, we hope that this document serves a pedagogical introduction to a first collection of advanced ball-by-ball cricket metrics and pathway literature for aspiring analysts. In addition to describing the methodology behind the measures, this document employs the said metrics to delve into and explain T20 cricket theory.</p>
+
+  <p>In Section&nbsp;<a href="#sec-totals">2</a>, we present a methodology for computing par scores to account for scoring trends and conditions. These par scores will be a critical component of subsequent calculations. In Sec&nbsp;<a href="#sec-raawaa">3</a>, we present RAA and WAA. Section&nbsp;<a href="#sec-dl">4</a> is a pedagogical explainer of the Duckworth-Lewis Method, which forms a cornerstone of both the Impact (Section&nbsp;<a href="#sec-impact">5</a>) and the Win Probability (Section&nbsp;<a href="#sec-wpa">6</a>) calculations.</p>
+
+  <p><span class="paragraph-head">Note on the data.</span> All the plots presented in this work are from a ball-by-ball dataset covering matches from T20Is, Indian Premier League, Big Bash League, Pakistan Super League, and SA20 since 2015 (640,157 balls). The Impact/RAA/WAA calculations might not cover all balls on account of incomplete balls remaining information.</p>
 
   <!-- ===================== COMPUTING EXPECTED TOTALS ===================== -->
   <h2 class="sec" id="sec-totals">2&ensp;Computing Expected Totals</h2>
@@ -581,9 +660,13 @@ mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%;}
 
   <p><span class="paragraph-head">A Note on BASRA:</span> In recent years, some TV broadcasts have seen the use of the so-called BASRA (Batting Average and Strike Rate Aggregate) metric. This is an illogical number constructed by broadcasters without any regard for actual cricket dynamics. By adding the average and SR, BASRA assigns arbitrary equal weights to both. The often cited issue with BASRA is that average and SR have different dimensions; this is not a grave issue in reality if the coefficients of the sum have the right dimensions. The issue with BASRA is assigning equal weights to both average and SR without any guide or objective function. Our Impact linear fit as done above uses the Impact Rate, derived independently and grounded in cricket logic via its reliance on the DL curves, as an objective function. Impact <em>is</em> the objective, the relation we obtained gives us weights that are guided by the &ldquo;empirical&rdquo; relation of average and SR to this Impact. They are therefore much more sensible than the arbitrary 1:1 ratio used in BASRA.</p>
 
+  <!-- ===================== WIN PROBABILITY ADDED ===================== -->
+  <h2 class="sec" id="sec-wpa">6&ensp;Win Probability Added</h2>
+
+  <p style="color:var(--muted);font-style:italic;">This section is in preparation.</p>
+
   <p class="footer-note">Himanish Ganjoo &middot; T20 Impact &middot; August 2026. Mathematics rendered with MathJax.</p>
 
 </div>
 </body>
 </html>
-
